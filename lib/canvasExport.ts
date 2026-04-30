@@ -7,8 +7,7 @@ export interface ExportFrame {
   y: number         // graphic y as fraction of canvas height
   width: number     // graphic width as fraction of canvas width
   height: number    // graphic height as fraction of canvas height
-  blendMode: GlobalCompositeOperation
-  opacity: number
+  opacity: number   // 0–1
 }
 
 const OUTPUT_SIZE = 2000
@@ -38,10 +37,8 @@ async function renderFrame(frame: ExportFrame): Promise<HTMLCanvasElement> {
   const gw = frame.width * OUTPUT_SIZE
   const gh = frame.height * OUTPUT_SIZE
 
-  ctx.globalCompositeOperation = frame.blendMode
   ctx.globalAlpha = frame.opacity
   ctx.drawImage(graphic, gx, gy, gw, gh)
-  ctx.globalCompositeOperation = 'source-over'
   ctx.globalAlpha = 1
 
   return canvas
@@ -64,21 +61,20 @@ export async function exportSingle(
 
 export async function exportAllAsZip(
   frames: Array<{ frame: ExportFrame; baseName: string }>,
-  zipName: string
+  zipName: string,
+  format: 'png' | 'jpg'
 ): Promise<void> {
   const zip = new JSZip()
+  const mimeType = format === 'png' ? 'image/png' : 'image/jpeg'
+  const quality = format === 'jpg' ? 0.92 : undefined
 
   await Promise.all(
     frames.map(async ({ frame, baseName }) => {
       const canvas = await renderFrame(frame)
-      const pngBlob = await new Promise<Blob>((res) =>
-        canvas.toBlob((b) => res(b!), 'image/png')
+      const blob = await new Promise<Blob>((res) =>
+        canvas.toBlob((b) => res(b!), mimeType, quality)
       )
-      const jpgBlob = await new Promise<Blob>((res) =>
-        canvas.toBlob((b) => res(b!), 'image/jpeg', 0.92)
-      )
-      zip.file(`${baseName}.png`, pngBlob)
-      zip.file(`${baseName}.jpg`, jpgBlob)
+      zip.file(`${baseName}.${format}`, blob)
     })
   )
 

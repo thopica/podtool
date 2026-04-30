@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { MOCKUP_VARIANTS } from '@/lib/mockups'
 import Uploader from '@/components/Uploader'
@@ -8,7 +8,6 @@ import VariantStrip from '@/components/VariantStrip'
 import ControlPanel from '@/components/ControlPanel'
 import ExportPanel from '@/components/ExportPanel'
 
-// Konva requires browser APIs — load client-side only
 const MockupEditor = dynamic(() => import('@/components/MockupEditor'), { ssr: false })
 
 const CANVAS_SIZE = 600
@@ -24,22 +23,42 @@ export default function Home() {
   const [graphicSrc, setGraphicSrc] = useState<string | null>(null)
   const [activeVariantId, setActiveVariantId] = useState(MOCKUP_VARIANTS[0].id)
   const [transform, setTransform] = useState<Transform | null>(null)
-  const [blendMode, setBlendMode] = useState(false)
+  const [initialTransform, setInitialTransform] = useState<Transform | null>(null)
+  const [opacity, setOpacity] = useState(1)
+  const captureInitial = useRef(false)
 
   const activeVariant = MOCKUP_VARIANTS.find((v) => v.id === activeVariantId)!
 
   const handleGraphicLoaded = useCallback((src: string) => {
     setGraphicSrc(src)
     setTransform(null)
+    setInitialTransform(null)
+    setOpacity(1)
+    captureInitial.current = true
   }, [])
 
   const handleTransformChange = useCallback((t: Transform) => {
     setTransform(t)
+    // Capture the very first transform (auto-placement) as the reset target
+    if (captureInitial.current) {
+      setInitialTransform(t)
+      captureInitial.current = false
+    }
+  }, [])
+
+  const handleReset = useCallback(() => {
+    if (initialTransform) setTransform(initialTransform)
+  }, [initialTransform])
+
+  const handleDelete = useCallback(() => {
+    setGraphicSrc(null)
+    setTransform(null)
+    setInitialTransform(null)
+    setOpacity(1)
   }, [])
 
   return (
     <main className="min-h-screen p-6 md:p-10">
-      {/* Header */}
       <div className="mb-8 border-b-4 border-black pb-4">
         <h1 className="text-4xl font-black uppercase tracking-tighter leading-none">
           PODTOOL
@@ -56,7 +75,7 @@ export default function Home() {
           <MockupEditor
             variant={activeVariant}
             graphicSrc={graphicSrc}
-            blendMode={blendMode}
+            opacity={opacity}
             onTransformChange={handleTransformChange}
             transform={transform}
           />
@@ -70,7 +89,7 @@ export default function Home() {
               activeId={activeVariantId}
               graphicSrc={graphicSrc}
               transform={transform}
-              blendMode={blendMode}
+              blendMode={false}
               onSelect={setActiveVariantId}
             />
           </div>
@@ -89,17 +108,17 @@ export default function Home() {
           {graphicSrc && (
             <>
               <ControlPanel
-                blendMode={blendMode}
-                onBlendModeToggle={() => setBlendMode((b) => !b)}
-                transform={transform}
-                onTransformChange={handleTransformChange}
-                canvasSize={CANVAS_SIZE}
+                opacity={opacity}
+                onOpacityChange={setOpacity}
+                onReset={handleReset}
+                onDelete={handleDelete}
+                hasGraphic={!!graphicSrc}
               />
               <ExportPanel
                 activeVariantId={activeVariantId}
                 graphicSrc={graphicSrc}
                 transform={transform}
-                blendMode={blendMode}
+                opacity={opacity}
                 canvasSize={CANVAS_SIZE}
               />
             </>

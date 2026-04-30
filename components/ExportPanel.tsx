@@ -8,7 +8,7 @@ interface ExportPanelProps {
   activeVariantId: string
   graphicSrc: string | null
   transform: { x: number; y: number; width: number; height: number } | null
-  blendMode: boolean
+  opacity: number
   canvasSize: number
 }
 
@@ -16,11 +16,12 @@ export default function ExportPanel({
   activeVariantId,
   graphicSrc,
   transform,
-  blendMode,
+  opacity,
   canvasSize,
 }: ExportPanelProps) {
   const [designName, setDesignName] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [allFormat, setAllFormat] = useState<'png' | 'jpg'>('png')
 
   const activeVariant = MOCKUP_VARIANTS.find((v) => v.id === activeVariantId)!
   const slug = designName.trim().toLowerCase().replace(/\s+/g, '-') || 'design'
@@ -37,8 +38,7 @@ export default function ExportPanel({
       y: transform!.y / canvasSize,
       width: transform!.width / canvasSize,
       height: transform!.height / canvasSize,
-      blendMode: blendMode ? 'multiply' : 'source-over',
-      opacity: 1,
+      opacity,
     }
   }
 
@@ -60,7 +60,7 @@ export default function ExportPanel({
         frame: buildFrame(v.id),
         baseName: `${slug}-${v.colorSlug}`,
       }))
-      await exportAllAsZip(frames, slug)
+      await exportAllAsZip(frames, slug, allFormat)
     } finally {
       setExporting(false)
     }
@@ -93,11 +93,11 @@ export default function ExportPanel({
             Filename Preview
           </div>
           <div className="bg-yellow-300 border-4 border-black px-3 py-1 text-sm font-black tracking-tight">
-            {previewName}.png / .jpg
+            {previewName}.{allFormat}
           </div>
         </div>
 
-        {/* Export current */}
+        {/* Export current variant */}
         <div>
           <div className="font-black uppercase text-sm tracking-tight mb-2">Current Variant</div>
           <div className="flex gap-2">
@@ -122,22 +122,41 @@ export default function ExportPanel({
           </div>
         </div>
 
-        {/* Export all */}
-        <button
-          onClick={handleExportAll}
-          disabled={disabled || exporting}
-          className={`
-            border-4 border-black px-4 py-3 font-black uppercase text-sm tracking-tight w-full
-            transition-colors cursor-pointer
-            ${disabled || exporting
-              ? 'opacity-40 cursor-not-allowed bg-white'
-              : 'bg-yellow-300 hover:bg-yellow-400 active:bg-yellow-500'
-            }
-          `}
-          style={{ boxShadow: '4px 4px 0 #000' }}
-        >
-          {exporting ? 'Exporting…' : '↓ Export All 7 Variants (ZIP)'}
-        </button>
+        {/* Export all variants */}
+        <div>
+          <div className="font-black uppercase text-sm tracking-tight mb-2">All Variants</div>
+          <div className="flex gap-2 mb-3">
+            {(['png', 'jpg'] as const).map((fmt) => (
+              <button
+                key={fmt}
+                onClick={() => setAllFormat(fmt)}
+                className={`
+                  border-4 border-black px-4 py-1 font-black uppercase text-sm tracking-tight
+                  cursor-pointer transition-colors
+                  ${allFormat === fmt ? 'bg-yellow-300' : 'bg-white hover:bg-yellow-50'}
+                `}
+                style={{ boxShadow: '2px 2px 0 #000' }}
+              >
+                {fmt.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleExportAll}
+            disabled={disabled || exporting}
+            className={`
+              border-4 border-black px-4 py-3 font-black uppercase text-sm tracking-tight w-full
+              transition-colors cursor-pointer
+              ${disabled || exporting
+                ? 'opacity-40 cursor-not-allowed bg-white'
+                : 'bg-yellow-300 hover:bg-yellow-400 active:bg-yellow-500'
+              }
+            `}
+            style={{ boxShadow: '4px 4px 0 #000' }}
+          >
+            {exporting ? 'Exporting…' : '↓ Export All 7 Variants (ZIP)'}
+          </button>
+        </div>
 
       </div>
     </div>

@@ -8,7 +8,7 @@ import { MockupVariant, PRINT_AREA } from '@/lib/mockups'
 interface MockupEditorProps {
   variant: MockupVariant
   graphicSrc: string | null
-  blendMode: boolean
+  opacity: number
   onTransformChange: (t: { x: number; y: number; width: number; height: number }) => void
   transform: { x: number; y: number; width: number; height: number } | null
 }
@@ -18,7 +18,7 @@ const CANVAS_SIZE = 600
 export default function MockupEditor({
   variant,
   graphicSrc,
-  blendMode,
+  opacity,
   onTransformChange,
   transform,
 }: MockupEditorProps) {
@@ -29,14 +29,12 @@ export default function MockupEditor({
   const transformerRef = useRef<Konva.Transformer>(null)
   const isInitialized = useRef(false)
 
-  // Load mockup image
   useEffect(() => {
     const img = new window.Image()
     img.onload = () => setMockupImage(img)
     img.src = variant.filename
   }, [variant.filename])
 
-  // Load graphic image; reset selection and init flag on new upload
   useEffect(() => {
     if (!graphicSrc) { setGraphicImage(null); setIsSelected(false); return }
     const img = new window.Image()
@@ -48,8 +46,7 @@ export default function MockupEditor({
     img.src = graphicSrc
   }, [graphicSrc])
 
-  // Attach or detach transformer based on selection state.
-  // Runs after render so both graphicRef and transformerRef are guaranteed mounted.
+  // Attach or detach transformer — runs after render so refs are guaranteed mounted
   useEffect(() => {
     const tr = transformerRef.current
     if (!tr) return
@@ -61,13 +58,11 @@ export default function MockupEditor({
     tr.getLayer()?.batchDraw()
   }, [isSelected, graphicImage])
 
-  // Set initial position inside print area on first graphic load
+  // Auto-place graphic inside print area on first load
   useEffect(() => {
     if (!graphicImage || isInitialized.current) return
-    if (transform) {
-      isInitialized.current = true
-      return
-    }
+    if (transform) { isInitialized.current = true; return }
+
     const printX = PRINT_AREA.xFraction * CANVAS_SIZE
     const printY = PRINT_AREA.yFraction * CANVAS_SIZE
     const printW = PRINT_AREA.wFraction * CANVAS_SIZE
@@ -78,10 +73,12 @@ export default function MockupEditor({
     let h = w / aspect
     if (h > printH * 0.7) { h = printH * 0.7; w = h * aspect }
 
-    const x = printX + (printW - w) / 2
-    const y = printY + (printH - h) / 2
-
-    onTransformChange({ x, y, width: w, height: h })
+    onTransformChange({
+      x: printX + (printW - w) / 2,
+      y: printY + (printH - h) / 2,
+      width: w,
+      height: h,
+    })
     isInitialized.current = true
   }, [graphicImage, transform, onTransformChange])
 
@@ -123,7 +120,6 @@ export default function MockupEditor({
         width={CANVAS_SIZE}
         height={CANVAS_SIZE}
         onMouseDown={(e) => {
-          // Deselect when clicking the empty stage background
           if (e.target === e.target.getStage()) setIsSelected(false)
         }}
       >
@@ -144,8 +140,8 @@ export default function MockupEditor({
               y={transform.y}
               width={transform.width}
               height={transform.height}
+              opacity={opacity}
               draggable
-              globalCompositeOperation={blendMode ? 'multiply' : 'source-over'}
               onClick={() => setIsSelected(true)}
               onTap={() => setIsSelected(true)}
               onDragEnd={handleDragEnd}
@@ -155,7 +151,7 @@ export default function MockupEditor({
           {/* Transformer always in DOM — nodes() controls visibility */}
           <Transformer
             ref={transformerRef}
-            keepRatio={false}
+            keepRatio={true}
             boundBoxFunc={(oldBox, newBox) => {
               if (newBox.width < 20 || newBox.height < 20) return oldBox
               return newBox
