@@ -24,9 +24,9 @@ export default function MockupEditor({
 }: MockupEditorProps) {
   const [mockupImage, setMockupImage] = useState<HTMLImageElement | null>(null)
   const [graphicImage, setGraphicImage] = useState<HTMLImageElement | null>(null)
+  const [isSelected, setIsSelected] = useState(false)
   const graphicRef = useRef<Konva.Image>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
-  const stageRef = useRef<Konva.Stage>(null)
   const isInitialized = useRef(false)
 
   // Load mockup image
@@ -36,30 +36,35 @@ export default function MockupEditor({
     img.src = variant.filename
   }, [variant.filename])
 
-  // Load graphic image
+  // Load graphic image; reset selection and init flag on new upload
   useEffect(() => {
-    if (!graphicSrc) { setGraphicImage(null); return }
+    if (!graphicSrc) { setGraphicImage(null); setIsSelected(false); return }
     const img = new window.Image()
     img.onload = () => {
       setGraphicImage(img)
       isInitialized.current = false
+      setIsSelected(false)
     }
     img.src = graphicSrc
   }, [graphicSrc])
 
-  // Attach transformer to graphic node
+  // Attach or detach transformer based on selection state.
+  // Runs after render so both graphicRef and transformerRef are guaranteed mounted.
   useEffect(() => {
-    if (graphicRef.current && transformerRef.current) {
-      transformerRef.current.nodes([graphicRef.current])
-      transformerRef.current.getLayer()?.batchDraw()
+    const tr = transformerRef.current
+    if (!tr) return
+    if (isSelected && graphicRef.current) {
+      tr.nodes([graphicRef.current])
+    } else {
+      tr.nodes([])
     }
-  }, [graphicImage])
+    tr.getLayer()?.batchDraw()
+  }, [isSelected, graphicImage])
 
   // Set initial position inside print area on first graphic load
   useEffect(() => {
     if (!graphicImage || isInitialized.current) return
     if (transform) {
-      // Restore saved transform (switching variants)
       isInitialized.current = true
       return
     }
@@ -114,7 +119,14 @@ export default function MockupEditor({
       className="border-4 border-black"
       style={{ boxShadow: '4px 4px 0 #000', width: CANVAS_SIZE, height: CANVAS_SIZE }}
     >
-      <Stage ref={stageRef} width={CANVAS_SIZE} height={CANVAS_SIZE}>
+      <Stage
+        width={CANVAS_SIZE}
+        height={CANVAS_SIZE}
+        onMouseDown={(e) => {
+          // Deselect when clicking the empty stage background
+          if (e.target === e.target.getStage()) setIsSelected(false)
+        }}
+      >
         <Layer>
           {mockupImage && (
             <KonvaImage
@@ -134,25 +146,26 @@ export default function MockupEditor({
               height={transform.height}
               draggable
               globalCompositeOperation={blendMode ? 'multiply' : 'source-over'}
+              onClick={() => setIsSelected(true)}
+              onTap={() => setIsSelected(true)}
               onDragEnd={handleDragEnd}
               onTransformEnd={handleTransformEnd}
             />
           )}
-          {graphicImage && transform && (
-            <Transformer
-              ref={transformerRef}
-              keepRatio={false}
-              boundBoxFunc={(oldBox, newBox) => {
-                if (newBox.width < 20 || newBox.height < 20) return oldBox
-                return newBox
-              }}
-              borderStroke="#FFE500"
-              borderStrokeWidth={2}
-              anchorStroke="#000"
-              anchorFill="#FFE500"
-              anchorSize={10}
-            />
-          )}
+          {/* Transformer always in DOM — nodes() controls visibility */}
+          <Transformer
+            ref={transformerRef}
+            keepRatio={false}
+            boundBoxFunc={(oldBox, newBox) => {
+              if (newBox.width < 20 || newBox.height < 20) return oldBox
+              return newBox
+            }}
+            borderStroke="#FFE500"
+            borderStrokeWidth={2}
+            anchorStroke="#000"
+            anchorFill="#FFE500"
+            anchorSize={10}
+          />
         </Layer>
       </Stage>
     </div>
