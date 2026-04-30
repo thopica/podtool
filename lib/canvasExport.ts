@@ -64,21 +64,20 @@ export async function exportSingle(
 
 export async function exportAllAsZip(
   frames: Array<{ frame: ExportFrame; baseName: string }>,
-  zipName: string
+  zipName: string,
+  format: 'png' | 'jpg'
 ): Promise<void> {
   const zip = new JSZip()
+  const mimeType = format === 'png' ? 'image/png' : 'image/jpeg'
+  const quality = format === 'jpg' ? 0.92 : undefined
 
   await Promise.all(
     frames.map(async ({ frame, baseName }) => {
       const canvas = await renderFrame(frame)
-      const pngBlob = await new Promise<Blob>((res) =>
-        canvas.toBlob((b) => res(b!), 'image/png')
+      const blob = await new Promise<Blob>((res) =>
+        canvas.toBlob((b) => res(b!), mimeType, quality)
       )
-      const jpgBlob = await new Promise<Blob>((res) =>
-        canvas.toBlob((b) => res(b!), 'image/jpeg', 0.92)
-      )
-      zip.file(`${baseName}.png`, pngBlob)
-      zip.file(`${baseName}.jpg`, jpgBlob)
+      zip.file(`${baseName}.${format}`, blob)
     })
   )
 

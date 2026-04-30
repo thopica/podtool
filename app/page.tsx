@@ -93,7 +93,6 @@ export default function Home() {
                 onBlendModeToggle={() => setBlendMode((b) => !b)}
                 transform={transform}
                 onTransformChange={handleTransformChange}
-                canvasSize={CANVAS_SIZE}
               />
               <ExportPanel
                 activeVariantId={activeVariantId}
