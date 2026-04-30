@@ -6,13 +6,13 @@ export interface MockupVariant {
 }
 
 export const MOCKUP_VARIANTS: MockupVariant[] = [
-  { id: 'black',         label: 'Black',          filename: '/mockups/black.jpg',         colorSlug: 'black' },
-  { id: 'charcoal',      label: 'Charcoal',       filename: '/mockups/charcoal.jpg',      colorSlug: 'charcoal' },
-  { id: 'steel-blue',    label: 'Steel Blue',     filename: '/mockups/steel-blue.jpg',    colorSlug: 'steel-blue' },
-  { id: 'military-green',label: 'Military Green', filename: '/mockups/military-green.jpg',colorSlug: 'military-green' },
-  { id: 'red',           label: 'Red',            filename: '/mockups/red.jpg',           colorSlug: 'red' },
-  { id: 'sport-gray',    label: 'Sport Gray',     filename: '/mockups/sport-gray.jpg',    colorSlug: 'sport-gray' },
-  { id: 'white',         label: 'White',          filename: '/mockups/white.jpg',         colorSlug: 'white' },
+  { id: 'black',          label: 'Black',          filename: '/mockups/shirt-black.png',         colorSlug: 'black' },
+  { id: 'charcoal',       label: 'Charcoal',       filename: '/mockups/shirt-charcoal.png',      colorSlug: 'charcoal' },
+  { id: 'indigoblue',     label: 'Indigo Blue',    filename: '/mockups/shirt-indigoblue.png',    colorSlug: 'indigoblue' },
+  { id: 'militarygreen',  label: 'Military Green', filename: '/mockups/shirt-militarygreen.png', colorSlug: 'militarygreen' },
+  { id: 'red',            label: 'Red',            filename: '/mockups/shirt-red.png',           colorSlug: 'red' },
+  { id: 'sportgrey',      label: 'Sport Grey',     filename: '/mockups/shirt-sportgrey.png',     colorSlug: 'sportgrey' },
+  { id: 'white',          label: 'White',          filename: '/mockups/shirt-white.png',         colorSlug: 'white' },
 ]
 
 // Print area as fraction of the mockup image dimensions (tweak after seeing real images)
