@@ -97,7 +97,7 @@ export default function Home() {
 
         {/* Right column: controls */}
         <div className="flex flex-col gap-6 flex-1 max-w-sm">
-          <Uploader onGraphicLoaded={handleGraphicLoaded} />
+          <Uploader onGraphicLoaded={handleGraphicLoaded} hasGraphic={!!graphicSrc} />
 
           {!graphicSrc && (
             <div className="border-4 border-black border-dashed p-6 font-mono text-sm text-gray-500 text-center uppercase tracking-tight">

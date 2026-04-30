@@ -4,9 +4,10 @@ import { useRef, useState } from 'react'
 
 interface UploaderProps {
   onGraphicLoaded: (dataUrl: string) => void
+  hasGraphic: boolean
 }
 
-export default function Uploader({ onGraphicLoaded }: UploaderProps) {
+export default function Uploader({ onGraphicLoaded, hasGraphic }: UploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
@@ -25,6 +26,8 @@ export default function Uploader({ onGraphicLoaded }: UploaderProps) {
   function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) handleFile(file)
+    // Reset so selecting the same file again still fires onChange
+    e.target.value = ''
   }
 
   function onDrop(e: React.DragEvent) {
@@ -55,10 +58,10 @@ export default function Uploader({ onGraphicLoaded }: UploaderProps) {
         onChange={onInputChange}
       />
       <div className="text-2xl font-black uppercase tracking-tight mb-1">
-        {fileName ? '↺ CHANGE GRAPHIC' : '+ UPLOAD GRAPHIC'}
+        {hasGraphic && fileName ? '↺ CHANGE GRAPHIC' : '+ UPLOAD GRAPHIC'}
       </div>
       <div className="text-sm font-mono text-gray-600">
-        {fileName ? fileName : 'PNG or JPG — drag & drop or click'}
+        {hasGraphic && fileName ? fileName : 'PNG or JPG — drag & drop or click'}
       </div>
     </div>
   )
